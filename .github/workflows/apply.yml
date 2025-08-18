@@ -1,0 +1,141 @@
+# CI/CD Pipeline for Main Branch
+# Builds and deploys infrastructure changes when code is pushed to main
+
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: apply_main
+  cancel-in-progress: false
+
+# Permissions needed for the workflow
+permissions:
+  contents: read           # Read repository contents
+  actions: write          # Update repository variables
+  id-token: write         # For GCP authentication
+
+env:
+  TF_VERSION: "1.8.5"
+
+jobs:
+  # Detect which parts of the codebase have changed
+  detect-changes:
+    name: "Detect Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      backlog-webhook-cloudrun: ${{ steps.changes.outputs.backlog-webhook-cloudrun }}
+      terraform: ${{ steps.changes.outputs.terraform }}
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: "Detect File Changes"
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backlog-webhook-cloudrun:
+              - 'cloudrun-app/backlog-webhook-cloudrun/**'
+            terraform:
+              - 'terraform/**'
+
+  # Build and push the backlog webhook service if changed
+  build-backlog-webhook:
+    name: "Build & Push Backlog Webhook Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true'
+    uses: ./.github/workflows/build-function.yml
+    with:
+      dockerfile_path: "./cloudrun-app/backlog-webhook-cloudrun"
+      image_name: "backlog-webhook-cloudrun"
+      repo_variables_name: "BACKLOG_WEBHOOK_LATEST_IMAGE_TAG"
+    secrets:
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Deploy infrastructure changes with Terraform
+  terraform-apply:
+    name: "Deploy Infrastructure"
+    needs: [detect-changes, build-backlog-webhook]
+    if: always() && !failure()
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: "Configure GCP Credentials"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: "Check Terraform Format"
+        run: terraform fmt -check -recursive
+        working-directory: terraform/env
+
+      - name: "Initialize Terraform"
+        run: terraform init -no-color
+        working-directory: terraform/env
+
+      - name: "Validate Terraform Configuration"
+        run: terraform validate
+        working-directory: terraform/env
+
+      - name: "Determine Image Tag"
+        run: |
+          if [ "${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}" == "true" ]; then
+            echo "BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "📦 Using new image tag: ${IMAGE_TAG}"
+          else
+            echo "BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_LATEST_IMAGE_TAG }}" >> $GITHUB_ENV
+            echo "📦 Using existing image tag: ${{ vars.BACKLOG_WEBHOOK_LATEST_IMAGE_TAG }}"
+          fi
+
+      - name: "Apply Terraform Changes"
+        run: |
+          echo "🚀 Applying Terraform configuration..."
+          echo "📋 Using terraform.tfvars for default values"
+          echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
+          terraform apply \
+            -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
+            -auto-approve \
+            -no-color
+        working-directory: terraform/env
+
+      - name: "Display Terraform Outputs"
+        run: |
+          echo "📋 Infrastructure deployment completed successfully!"
+          echo ""
+          echo "🔗 Outputs:"
+          terraform output
+        working-directory: terraform/env
+
+  # Notify deployment status
+  notify-deployment:
+    name: "Notify Deployment Status"
+    needs: [terraform-apply]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Deployment Success Notification"
+        if: needs.terraform-apply.result == 'success'
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🚀 Infrastructure is now up to date."
+
+      - name: "Deployment Failure Notification"
+        if: needs.terraform-apply.result == 'failure'
+        run: |
+          echo "❌ Deployment failed!"
+          echo "🔍 Check the logs above for details."
+          exit 1

@@ -1,0 +1,1 @@
+gcloud config set account rui.hamada@gmail.com

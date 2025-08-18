@@ -1,0 +1,77 @@
+{
+  "id": 762779737,
+  "project": {
+    "id": 664834,
+    "projectKey": "GENAI",
+    "name": "生成AIシステム連携テスト用",
+    "chartEnabled": true,
+    "subtaskingEnabled": true,
+    "projectLeaderCanEditProjectLeader": true,
+    "useWikiTreeView": true,
+    "textFormattingRule": "markdown",
+    "archived": false
+  },
+  "type": 3,
+  "content": {
+    "id": 114750053,
+    "key_id": 1,
+    "summary": "osfs-issue-test-1",
+    "description": "Details",
+    "issueType": {
+      "id": 3526434,
+      "projectId": 664834,
+      "name": "タスク",
+      "color": "#7ea800",
+      "displayOrder": 0
+    },
+    "resolution": null,
+    "priority": {
+      "id": 3,
+      "name": "中"
+    },
+    "status": {
+      "id": 2,
+      "name": "処理中"
+    },
+    "assignee": {
+      "id": 1710649,
+      "userId": "*Wfw2kWJ02g",
+      "name": "濱田 塁",
+      "roleType": 94,
+      "lang": "ja"
+    },
+    "category": [],
+    "versions": [],
+    "milestone": [],
+    "startDate": null,
+    "dueDate": null,
+    "estimatedHours": null,
+    "actualHours": null,
+    "parentIssueId": null,
+    "customFields": [],
+    "attachments": [],
+    "shared_files": [],
+    "externalFileLinks": [],
+    "diff": null,
+    "comment": {
+      "id": 586721933,
+      "content": "@濱田 塁 これはテストのコメントです。2"
+    },
+    "changes": []
+  },
+  "notifications": [],
+  "createdUser": {
+    "id": 1710649,
+    "userId": null,
+    "name": "濱田 塁",
+    "roleType": 2,
+    "lang": "ja",
+    "mailAddress": null,
+    "nulabAccount": {
+      "nulabId": "ldPZxxl9VYAkKxmsE8V04lkTcb4FKq9mvvjT3gaBTGtexMF01M",
+      "name": "濱田 塁",
+      "uniqueId": "rhamada-lI3"
+    }
+  },
+  "created": "2025-08-12T07:37:53Z"
+}

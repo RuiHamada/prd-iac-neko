@@ -1,0 +1,170 @@
+# PR Check Workflow
+# Validates changes on pull requests and provides Terraform plan output
+
+name: PR Check
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# Permissions needed for the workflow
+permissions:
+  contents: read           # Read repository contents
+  pull-requests: write    # Comment on pull requests
+  id-token: write         # For GCP authentication
+
+env:
+  TF_VERSION: "1.8.5"
+
+jobs:
+  # Detect which parts of the codebase have changed
+  detect-changes:
+    name: "Detect Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      backlog-webhook-cloudrun: ${{ steps.changes.outputs.backlog-webhook-cloudrun }}
+      terraform: ${{ steps.changes.outputs.terraform }}
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Detect File Changes"
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backlog-webhook-cloudrun:
+              - 'cloudrun-app/backlog-webhook-cloudrun/**'
+            terraform:
+              - 'terraform/**'
+
+  # Build and test the backlog webhook service if changed
+  build-backlog-webhook:
+    name: "Build Backlog Webhook Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Build Docker Image for Testing"
+        run: |
+          echo "Building backlog-webhook-cloudrun service for testing..."
+          docker build ./cloudrun-app/backlog-webhook-cloudrun -t backlog-webhook-cloudrun:${{ github.sha }}
+          echo "✅ Build successful"
+
+  # Run Terraform plan and post results to PR
+  terraform-plan:
+    name: "Terraform Plan"
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.terraform == 'true' ||
+      needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: "Configure GCP Credentials"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: "Initialize Terraform"
+        run: terraform init
+        working-directory: terraform/env
+
+      - name: "Determine Image Tag"
+        run: |
+          if [ "${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}" == "true" ]; then
+            echo "BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          else
+            echo "BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_LATEST_IMAGE_TAG }}" >> $GITHUB_ENV
+          fi
+
+      - name: "Generate Terraform Plan"
+        id: plan
+        run: |
+          echo "📋 Using terraform.tfvars for default values"
+          echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
+          terraform plan \
+            -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
+            -no-color \
+            -detailed-exitcode
+        working-directory: terraform/env
+        continue-on-error: true
+
+      - name: "Comment PR with Plan Results"
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const output = `
+            ## Terraform Plan 📋
+
+            **Changed Components:**
+            - Backlog Webhook Service: ${{ needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true' && '✅ Changed' || '⏭️ No changes' }}
+            - Terraform Configuration: ${{ needs.detect-changes.outputs.terraform == 'true' && '✅ Changed' || '⏭️ No changes' }}
+
+            **Image Tags:**
+            - Backlog Webhook: \`${process.env.BACKLOG_WEBHOOK_TAG}\`
+
+            <details>
+            <summary>📊 Show Terraform Plan Output</summary>
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            **Plan Status:** ${{ steps.plan.outcome == 'success' && '✅ Success' || '❌ Failed' }}
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('## Terraform Plan')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
+
+      - name: "Fail if Plan Failed"
+        if: steps.plan.outcome == 'failure'
+        run: |
+          echo "❌ Terraform plan failed"
+          exit 1

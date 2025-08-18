@@ -1,0 +1,22 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
+
+# credential
+*credentials.json
+
+# env
+.env
+
+# pycache
+__pycache__/
+
+# gdrive-data-fetcher
+cloud_sql_proxy
+**/gdrive_data/
