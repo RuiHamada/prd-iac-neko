@@ -89,11 +89,24 @@ jobs:
 
       - name: "Determine Image Tag"
         run: |
+          echo "🔍 Debug: GITHUB_ENV write test"
+          echo "GITHUB_ENV path: '$GITHUB_ENV'"
+          echo "Write test result:"
+          echo "TEST_VAR=test_value" >> $GITHUB_ENV
+          echo "Write result: $?"
+          echo "File contents after test:"
+          cat "$GITHUB_ENV" 2>/dev/null || echo "Failed to read GITHUB_ENV"
+          
           if [ "${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}" == "true" ]; then
-            echo "backlog_webhook_tag=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "📦 Using new image tag: ${IMAGE_TAG}"
           else
-            echo "backlog_webhook_tag=${{ vars.BACKLOG_WEBHOOK_TAG }}" >> $GITHUB_ENV
+            echo "BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_TAG }}" >> $GITHUB_ENV
+            echo "📦 Using existing image tag: ${{ vars.BACKLOG_WEBHOOK_TAG }}"
           fi
+          
+          echo "Final GITHUB_ENV contents:"
+          cat "$GITHUB_ENV" 2>/dev/null || echo "Failed to read GITHUB_ENV"
 
       - name: "Generate Terraform Plan"
         id: plan

@@ -92,17 +92,46 @@ jobs:
 
       - name: "Determine Image Tag"
         run: |
+          echo "🔍 Debug: Environment and file information"
+          echo "GITHUB_ENV path: '$GITHUB_ENV'"
+          echo "Current working directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo "File permissions check:"
+          ls -la "$GITHUB_ENV" 2>/dev/null || echo "GITHUB_ENV file does not exist yet"
+          
+          echo "🔍 Debug: Input variables"
+          echo "Change detection result: '${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}'"
+          echo "IMAGE_TAG: '${IMAGE_TAG}'"
+          echo "Repository variable BACKLOG_WEBHOOK_TAG: '${{ vars.BACKLOG_WEBHOOK_TAG }}'"
+          
           if [ "${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}" == "true" ]; then
-            echo "backlog_webhook_tag=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "✅ Branch: Using new image tag"
+            echo "Writing: BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}"
+            echo "BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "Write result: $?"
             echo "📦 Using new image tag: ${IMAGE_TAG}"
           else
-            echo "backlog_webhook_tag=${{ vars.BACKLOG_WEBHOOK_TAG}}" >> $GITHUB_ENV
+            echo "✅ Branch: Using existing image tag"
+            echo "Writing: BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_TAG }}"
+            echo "BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_TAG }}" >> $GITHUB_ENV
+            echo "Write result: $?"
             echo "📦 Using existing image tag: ${{ vars.BACKLOG_WEBHOOK_TAG }}"
           fi
+          
+          echo "🔍 Debug: Verifying GITHUB_ENV file after write"
+          echo "File exists: $(test -f "$GITHUB_ENV" && echo 'YES' || echo 'NO')"
+          echo "File size: $(wc -c < "$GITHUB_ENV" 2>/dev/null || echo 'ERROR')"
+          echo "File contents:"
+          cat "$GITHUB_ENV" 2>/dev/null || echo "Failed to read GITHUB_ENV file"
 
       - name: "Apply Terraform Changes"
         run: |
           echo "🚀 Applying Terraform configuration..."
+          echo "🔍 Debug: Environment variables in Apply step"
+          echo "BACKLOG_WEBHOOK_TAG: '${BACKLOG_WEBHOOK_TAG}'"
+          echo "IMAGE_TAG: '${IMAGE_TAG}'"
+          echo "All environment variables containing 'TAG':"
+          env | grep -i tag || echo "No TAG variables found"
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform apply \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
