@@ -21,9 +21,6 @@ on:
       GOOGLE_CREDENTIALS:
         description: "GCP Service Account JSON credentials for accessing Container Registry"
         required: true
-      GITHUB_TOKEN:
-        description: "GitHub token for API access (use built-in token or PAT if more permissions needed)"
-        required: false
 
 jobs:
   build-and-push:
@@ -70,8 +67,8 @@ jobs:
 
       - name: "Update Repository Variable"
         env:
-          # Use provided token or fall back to built-in GITHUB_TOKEN
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+          # 組み込みの github.token を直接使用
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "🔧 Updating repository variable: ${REPO_VARIABLES_NAME}"
           

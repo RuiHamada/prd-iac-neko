@@ -55,7 +55,6 @@ jobs:
       repo_variables_name: "BACKLOG_WEBHOOK_LATEST_IMAGE_TAG"
     secrets:
       GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Deploy infrastructure changes with Terraform
   terraform-apply:
