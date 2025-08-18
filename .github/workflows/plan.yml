@@ -98,16 +98,22 @@ jobs:
       - name: "Generate Terraform Plan"
         id: plan
         run: |
-          echo "📋 Using terraform.tfvars for default values"
+          echo "📋 Planning Terraform changes..."
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform plan \
-            -var-file=terraform.tfvars \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
             -var="backlog_webhook_secret_token=${BACKLOG_WEBHOOK_SECRET_TOKEN}" \
             -no-color \
             -detailed-exitcode
         working-directory: terraform/env
         env:
+          # Repository Variables (TF_VAR_ prefix automatically read by Terraform)
+          TF_VAR_project_id: ${{ vars.TF_VAR_PROJECT_ID }}
+          TF_VAR_suffix: ${{ vars.TF_VAR_SUFFIX }}
+          TF_VAR_domain_name: ${{ vars.TF_VAR_DOMAIN_NAME }}
+          TF_VAR_cert_project_number: ${{ vars.TF_VAR_CERT_PROJECT_NUMBER }}
+          TF_VAR_lb_ip_address: ${{ vars.TF_VAR_LB_IP_ADDRESS }}
+          # Repository Secrets
           BACKLOG_WEBHOOK_SECRET_TOKEN: ${{ secrets.BACKLOG_WEBHOOK_SECRET_TOKEN }}
         continue-on-error: true
 

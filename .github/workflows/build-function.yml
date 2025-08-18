@@ -27,7 +27,7 @@ jobs:
     name: "Build & Push Docker Image"
     runs-on: ubuntu-latest
     env:
-      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      PROJECT_ID: ${{ vars.TF_VAR_PROJECT_ID }}
       IMAGE_TAG: ${{ github.sha }}
       IMAGE_NAME: ${{ inputs.image_name }}
       REPO_VARIABLES_NAME: ${{ inputs.repo_variables_name }}
