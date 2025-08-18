@@ -102,9 +102,12 @@ jobs:
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform plan \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
+            -var="backlog_webhook_secret_token=${BACKLOG_WEBHOOK_SECRET_TOKEN}" \
             -no-color \
             -detailed-exitcode
         working-directory: terraform/env
+        env:
+          BACKLOG_WEBHOOK_SECRET_TOKEN: ${{ secrets.BACKLOG_WEBHOOK_SECRET_TOKEN }}
         continue-on-error: true
 
       - name: "Comment PR with Plan Results"

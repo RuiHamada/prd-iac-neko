@@ -107,9 +107,12 @@ jobs:
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform apply \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
+            -var="backlog_webhook_secret_token=${BACKLOG_WEBHOOK_SECRET_TOKEN}" \
             -auto-approve \
             -no-color
         working-directory: terraform/env
+        env:
+          BACKLOG_WEBHOOK_SECRET_TOKEN: ${{ secrets.BACKLOG_WEBHOOK_SECRET_TOKEN }}
 
       - name: "Display Terraform Outputs"
         run: |

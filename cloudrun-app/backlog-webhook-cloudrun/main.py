@@ -44,6 +44,7 @@ def handle_backlog_webhook():
     logging.info(f"Received Backlog webhook payload: {payload}")
     return jsonify(success=True), 200
 
+
 if __name__ == "__main__":
     # This block is for local development.
     # In Cloud Run, Gunicorn will be used as the server.
