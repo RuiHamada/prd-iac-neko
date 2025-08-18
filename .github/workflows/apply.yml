@@ -93,11 +93,11 @@ jobs:
       - name: "Determine Image Tag"
         run: |
           if [ "${{ needs.detect-changes.outputs.backlog-webhook-cloudrun }}" == "true" ]; then
-            echo "BACKLOG_WEBHOOK_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+            echo "backlog_webhook_tag=${IMAGE_TAG}" >> $GITHUB_ENV
             echo "📦 Using new image tag: ${IMAGE_TAG}"
           else
-            echo "BACKLOG_WEBHOOK_TAG=${{ vars.BACKLOG_WEBHOOK_LATEST_IMAGE_TAG }}" >> $GITHUB_ENV
-            echo "📦 Using existing image tag: ${{ vars.BACKLOG_WEBHOOK_LATEST_IMAGE_TAG }}"
+            echo "backlog_webhook_tag=${{ vars.BACKLOG_WEBHOOK_TAG}}" >> $GITHUB_ENV
+            echo "📦 Using existing image tag: ${{ vars.BACKLOG_WEBHOOK_TAG }}"
           fi
 
       - name: "Apply Terraform Changes"
