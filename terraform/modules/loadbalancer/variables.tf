@@ -34,8 +34,8 @@ variable "certificate_map_id" {
   type        = string
 }
 
-variable "lb_ip_address" {
-  description = "Static IP address for the load balancer"
+variable "lb_ip_id" {
+  description = "The ID of the static IP address for the load balancer"
   type        = string
 }
 

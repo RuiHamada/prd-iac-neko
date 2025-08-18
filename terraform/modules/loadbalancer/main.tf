@@ -53,7 +53,7 @@ resource "google_compute_target_https_proxy" "https_proxy" {
 resource "google_compute_global_forwarding_rule" "forwarding_rule" {
   name                                                         = "forwarding-rule-${var.suffix}"
   external_managed_backend_bucket_migration_testing_percentage = 0
-  ip_address                                                   = var.lb_ip_address
+  ip_address                                                   = var.lb_ip_id
   ip_protocol                                                  = "TCP"
   network                                                      = ""
   network_tier                                                 = "PREMIUM"

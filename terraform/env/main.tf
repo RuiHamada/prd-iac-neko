@@ -38,7 +38,7 @@ module "loadbalancer" {
   domain_name                  = var.domain_name
   backend_service_id           = module.network.backend_service_id
   certificate_map_id           = module.network.certificate_map_id
-  lb_ip_address                = var.lb_ip_address
+  lb_ip_id                     = module.network.lb_ip_id
   backlog_webhook_service_name = module.cloudrun.backlog_webhook_service_name
   webhook_path                 = var.webhook_path
 

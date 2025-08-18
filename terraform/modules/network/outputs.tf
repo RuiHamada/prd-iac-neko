@@ -30,12 +30,17 @@ output "backend_service_id" {
 
 output "certificate_map_id" {
   description = "The ID of the certificate map"
-  value       = google_certificate_manager_certificate_map.cert_map.id
+  value       = "//certificatemanager.googleapis.com/${google_certificate_manager_certificate_map.cert_map.id}"
 }
 
 output "lb_ip_address" {
   description = "The static IP address of the load balancer"
   value       = google_compute_global_address.lb_ip.address
+}
+
+output "lb_ip_id" {
+  description = "The ID of the static IP address for the load balancer"
+  value       = google_compute_global_address.lb_ip.id
 }
 
 output "dns_zone_name" {

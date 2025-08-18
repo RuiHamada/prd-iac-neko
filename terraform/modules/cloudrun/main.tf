@@ -8,6 +8,9 @@ resource "google_cloud_run_v2_service" "backlog_webhook_cloudrun" {
   name     = "backlog-webhook-cloudrun-${var.suffix}"
   location = var.region
   ingress  = var.ingress_traffic
+  
+  # Disable deletion protection to allow Terraform to manage lifecycle
+  deletion_protection = false
 
   template {
     containers {
