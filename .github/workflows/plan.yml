@@ -8,8 +8,8 @@ on:
     types: [opened, synchronize]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  group: terraform-state-${{ github.repository }}
+  cancel-in-progress: false
 
 # Permissions needed for the workflow
 permissions:
@@ -101,6 +101,7 @@ jobs:
           echo "📋 Using terraform.tfvars for default values"
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform plan \
+            -var-file=terraform.tfvars \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
             -var="backlog_webhook_secret_token=${BACKLOG_WEBHOOK_SECRET_TOKEN}" \
             -no-color \

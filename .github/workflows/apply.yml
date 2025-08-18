@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: apply_main
+  group: terraform-state-${{ github.repository }}
   cancel-in-progress: false
 
 # Permissions needed for the workflow
@@ -106,6 +106,7 @@ jobs:
           echo "📋 Using terraform.tfvars for default values"
           echo "🔄 Overriding image tag: ${BACKLOG_WEBHOOK_TAG}"
           terraform apply \
+            -var-file=terraform.tfvars \
             -var="backlog_webhook_image_tag=${BACKLOG_WEBHOOK_TAG}" \
             -var="backlog_webhook_secret_token=${BACKLOG_WEBHOOK_SECRET_TOKEN}" \
             -auto-approve \
