@@ -157,6 +157,15 @@ jobs:
           terraform output
         working-directory: terraform/env
 
+      - name: "Update Repository Variable"
+        if: needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true'
+        run: |
+          echo "🔄 Updating Repository Variable BACKLOG_WEBHOOK_TAG to: ${BACKLOG_WEBHOOK_TAG}"
+          gh variable set BACKLOG_WEBHOOK_TAG --body "${BACKLOG_WEBHOOK_TAG}"
+          echo "✅ Repository Variable updated successfully!"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   # Notify deployment status
   notify-deployment:
     name: "Notify Deployment Status"
