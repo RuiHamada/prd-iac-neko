@@ -15,6 +15,7 @@ permissions:
   contents: read           # Read repository contents
   actions: write          # Update repository variables
   id-token: write         # For GCP authentication
+  metadata: read          # Read repository metadata
 
 env:
   TF_VERSION: "1.8.5"
@@ -161,10 +162,17 @@ jobs:
         if: needs.detect-changes.outputs.backlog-webhook-cloudrun == 'true'
         run: |
           echo "🔄 Updating Repository Variable BACKLOG_WEBHOOK_TAG to: ${BACKLOG_WEBHOOK_TAG}"
-          gh variable set BACKLOG_WEBHOOK_TAG --body "${BACKLOG_WEBHOOK_TAG}"
-          echo "✅ Repository Variable updated successfully!"
+          if [ -n "${{ secrets.GH_PAT_TOKEN }}" ]; then
+            echo "Using Personal Access Token for authentication..."
+            gh variable set BACKLOG_WEBHOOK_TAG --body "${BACKLOG_WEBHOOK_TAG}"
+            echo "✅ Repository Variable updated successfully!"
+          else
+            echo "⚠️ GH_PAT_TOKEN secret not found. Repository Variable update skipped."
+            echo "💡 To enable automatic variable updates, add a Personal Access Token as GH_PAT_TOKEN secret."
+            echo "🔗 Create token at: https://github.com/settings/tokens with 'repo' scope"
+          fi
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN || github.token }}
 
   # Notify deployment status
   notify-deployment:
