@@ -4,8 +4,8 @@
 set -e
 
 # Get current git commit hash
-# COMMIT_HASH=$(git rev-parse HEAD)
-COMMIT_HASH="latest"
+COMMIT_HASH=$(git rev-parse HEAD)
+# COMMIT_HASH="latest"
 PROJECT_ID="prd-iac-neko"
 IMAGE_NAME="backlog-webhook-cloudrun"
 
