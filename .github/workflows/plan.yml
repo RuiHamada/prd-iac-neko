@@ -126,6 +126,7 @@ jobs:
           TF_VAR_domain_name: ${{ vars.TF_VAR_DOMAIN_NAME }}
           TF_VAR_cert_project_number: ${{ vars.TF_VAR_CERT_PROJECT_NUMBER }}
           TF_VAR_lb_ip_address: ${{ vars.TF_VAR_LB_IP_ADDRESS }}
+          TF_VAR_dns_zone_name: ${{ vars.TF_VAR_DNS_ZONE_NAME }}
           # Repository Secrets
           BACKLOG_WEBHOOK_SECRET_TOKEN: ${{ secrets.BACKLOG_WEBHOOK_SECRET_TOKEN }}
         continue-on-error: true
