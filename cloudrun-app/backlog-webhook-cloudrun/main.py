@@ -113,8 +113,9 @@ def extract_comment_data(payload: dict) -> dict:
         project = payload.get("project", {})
         created_user = payload.get("createdUser", {})
         
-        # Extract issue information if available
-        issue = content.get("issue", {})
+        # Extract issue information - in Backlog webhooks, content itself contains issue info
+        # when it's a comment event on an issue
+        issue = content if content.get("id") and content.get("summary") else content.get("issue", {})
         
         # Format data to match existing AI processor expectations
         comment_data = {
@@ -228,3 +229,4 @@ if __name__ == "__main__":
     # In Cloud Run, Gunicorn will be used as the server.
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
