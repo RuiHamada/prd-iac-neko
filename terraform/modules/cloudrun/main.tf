@@ -20,6 +20,18 @@ resource "google_cloud_run_v2_service" "backlog_webhook_cloudrun" {
         name  = "BACKLOG_WEBHOOK_SECRET_TOKEN"
         value = var.backlog_webhook_secret_token
       }
+      env {
+        name  = "PROJECT_ID"
+        value = var.project_id
+      }
+      env {
+        name  = "PUBSUB_TOPIC"
+        value = "backlog-webhook-processor"
+      }
+      env {
+        name  = "LOG_LEVEL"
+        value = "INFO"
+      }
     }
   }
 
