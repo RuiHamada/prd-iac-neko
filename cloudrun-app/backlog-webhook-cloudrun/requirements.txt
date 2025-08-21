@@ -1,2 +1,4 @@
-Flask
-gunicorn
+Flask==2.3.3
+gunicorn==21.2.0
+google-cloud-pubsub==2.18.4
+google-cloud-secret-manager==2.17.0
